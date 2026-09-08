@@ -1,0 +1,54 @@
+name: raven-uav-simulator
+
+services:
+  # 1. Multimedia Simulator (.NET)
+  multimedia-simulator:
+    build:
+      context: ../multimedia-simulator/multimedia-simulator/multimedia_simulator
+      dockerfile: Dockerfile
+    container_name: multimedia-simulator
+    ports:
+      - "5000:5000"
+      - "8554:8554"
+    volumes:
+      - "C:/Users/dvirm/Documents/RAVEN-Project/VideoSimulatorStorage/videos:/app/storage/videos"
+      - "C:/Users/dvirm/Documents/RAVEN-Project/DBForVidoeSimulator:/app/db"
+    networks:
+      - default-net
+
+  # 2. Telemetry Simulator (FastAPI)
+  telemetry-simulator:
+    build:
+      context: ../telemetry-simulator
+      dockerfile: Dockerfile
+    container_name: telemetry-simulator
+    ports:
+      - "8000:8000"
+    volumes:
+      - "C:/Users/dvirm/Documents/RAVEN-Project/VideoSimulatorStorage/KLVs:/app/storage/KLVs"
+      - "C:/Users/dvirm/Documents/RAVEN-Project/DBForVidoeSimulator:/app/db"
+    networks:
+      - default-net
+
+  # 3. Simulator Proxy (.NET)
+  simulator-proxy:
+    build:
+      context: ../simulator-proxy/proxy-simulator/proxy-simulator
+      dockerfile: Dockerfile
+    container_name: simulator-proxy
+    ports:
+      - "5264:5264"
+    environment:
+      - ConnectionStrings__SQLiteDbPath=/app/db/simulatorProxy.db
+    volumes:
+      - "C:/Users/dvirm/Documents/RAVEN-Project/DBForVidoeSimulator:/app/db"
+    depends_on:
+      - multimedia-simulator
+      - telemetry-simulator
+    networks:
+      - default-net
+
+networks:
+  default-net:
+    name: kafka_default
+    external: true
